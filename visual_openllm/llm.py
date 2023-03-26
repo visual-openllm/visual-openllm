@@ -23,6 +23,6 @@ class LLM:
             # input_text = self.PROMPT_FORMAT.format(input_text=input_text)
             ids = self.tokenizer.encode(input_text)
             input_ids = torch.LongTensor([ids])
-            out = self.model.generate(input_ids=input_ids, max_length=150, do_sample=False, temperature=0)
+            out = self.model.generate(input_ids=input_ids, max_length=2048, do_sample=False, temperature=0)
             out_text = self.tokenizer.decode(out[0])
             return [out_text]
