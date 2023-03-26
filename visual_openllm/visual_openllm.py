@@ -11,8 +11,6 @@ import numpy as np
 import argparse
 import inspect
 
-from . import openai_inject  # Inject openai api instead of ChatGLM
-
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 from transformers import pipeline, BlipProcessor, BlipForConditionalGeneration, BlipForQuestionAnswering
 from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
