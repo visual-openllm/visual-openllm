@@ -12,8 +12,6 @@ from .llm import LLM
 
 llm_instance = LLM()
 
-origin_request_raw = APIRequestor.request_raw
-
 
 def inject(*args, **kwargs):
     print(f"!!! {args = }")
@@ -45,6 +43,18 @@ def inject(*args, **kwargs):
         return resp
     else:
         return requests.Response()
+
+
+origin_request_raw = APIRequestor.request_raw
+
+
+def inject_test(*args, **kwargs):
+    print(f"!!! {args = }")
+    print(f"!!! {kwargs = }")
+
+    resp = origin_request_raw(*args, **kwargs)
+    print(f"{resp.json() = }")
+    return resp
 
 
 APIRequestor.request_raw = inject
