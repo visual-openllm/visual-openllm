@@ -41,6 +41,8 @@ TOOLS:
 
 Visual ChatGPT  has access to the following tools:"""
 
+VISUAL_CHATGPT_PREFIX = ""
+
 
 VISUAL_CHATGPT_FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
 
@@ -59,6 +61,10 @@ Thought: Do I need to use a tool? No
 ```
 """
 
+VISUAL_CHATGPT_FORMAT_INSTRUCTIONS = """[{tool_names}][{ai_prefix}]
+==#==
+"""
+
 
 VISUAL_CHATGPT_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
@@ -72,6 +78,14 @@ New input: {input}
 Since Visual ChatGPT is a text language model, Visual ChatGPT must use tools to observe images rather than imagination.
 The thoughts and observations are only visible for Visual ChatGPT, Visual ChatGPT should remember to repeat important information in the final response for Human. 
 Thought: Do I need to use a tool? {agent_scratchpad}"""
+
+
+VISUAL_CHATGPT_SUFFIX = """{chat_history}
+==#==
+{input}
+==#==
+{agent_scratchpad}
+"""
 
 
 os.makedirs("image", exist_ok=True)
