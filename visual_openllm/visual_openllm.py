@@ -11,6 +11,8 @@ import numpy as np
 import argparse
 import inspect
 
+from . import openai_inject
+
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 from transformers import pipeline, BlipProcessor, BlipForConditionalGeneration, BlipForQuestionAnswering
 from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
@@ -39,6 +41,9 @@ TOOLS:
 
 Visual ChatGPT  has access to the following tools:"""
 
+VISUAL_CHATGPT_PREFIX = ""
+
+
 VISUAL_CHATGPT_FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
 
 ```
@@ -56,6 +61,11 @@ Thought: Do I need to use a tool? No
 ```
 """
 
+VISUAL_CHATGPT_FORMAT_INSTRUCTIONS = """[{tool_names}][{ai_prefix}]
+==#==
+"""
+
+
 VISUAL_CHATGPT_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
 
@@ -68,6 +78,15 @@ New input: {input}
 Since Visual ChatGPT is a text language model, Visual ChatGPT must use tools to observe images rather than imagination.
 The thoughts and observations are only visible for Visual ChatGPT, Visual ChatGPT should remember to repeat important information in the final response for Human. 
 Thought: Do I need to use a tool? {agent_scratchpad}"""
+
+
+VISUAL_CHATGPT_SUFFIX = """{chat_history}
+==#==
+{input}
+==#==
+{agent_scratchpad}
+"""
+
 
 os.makedirs("image", exist_ok=True)
 
@@ -1235,8 +1254,8 @@ class ConversationBot:
     def __init__(self, load_dict):
         # load_dict = {'VisualQuestionAnswering':'cuda:0', 'ImageCaptioning':'cuda:1',...}
         print(f"Initializing VisualChatGPT, load_dict={load_dict}")
-        if "ImageCaptioning" not in load_dict:
-            raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
+        # if "ImageCaptioning" not in load_dict:
+        #     raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
 
         self.llm = OpenAI(temperature=0)
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key="output")
@@ -1314,10 +1333,13 @@ class ConversationBot:
         return state, state, f"{txt} {image_filename} "
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--load", type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
+    parser.add_argument("--load", type=str, default="Text2Image_cuda:0")
+    parser.add_argument("--port", type=int, default=1015)
     args = parser.parse_args()
+    server_port = args.port
+
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
     with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
@@ -1339,4 +1361,4 @@ if __name__ == "__main__":
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-        demo.launch(server_name="0.0.0.0", server_port=1015)
+        demo.launch(server_name="0.0.0.0", server_port=server_port)
