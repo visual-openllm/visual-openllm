@@ -11,6 +11,8 @@ import numpy as np
 import argparse
 import inspect
 
+from . import openai_inject  # Inject openai api instead of ChatGLM
+
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 from transformers import pipeline, BlipProcessor, BlipForConditionalGeneration, BlipForQuestionAnswering
 from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
@@ -1314,10 +1316,13 @@ class ConversationBot:
         return state, state, f"{txt} {image_filename} "
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--load", type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
+    parser.add_argument("--port", type=int, default=1015)
     args = parser.parse_args()
+    server_port = args.port
+
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
     with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
@@ -1339,4 +1344,4 @@ if __name__ == "__main__":
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-        demo.launch(server_name="0.0.0.0", server_port=1015)
+        demo.launch(server_name="0.0.0.0", server_port=server_port)
