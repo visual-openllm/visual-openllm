@@ -1,5 +1,6 @@
 typecheck:
-	mypy -p src \
+	ruff check visual_openllm
+	mypy -p visual_openllm \
 		--ignore-missing-imports \
 		--warn-unreachable \
 		--implicit-optional \
