@@ -1243,8 +1243,8 @@ class ConversationBot:
     def __init__(self, load_dict):
         # load_dict = {'VisualQuestionAnswering':'cuda:0', 'ImageCaptioning':'cuda:1',...}
         print(f"Initializing VisualChatGPT, load_dict={load_dict}")
-        if "ImageCaptioning" not in load_dict:
-            raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
+        # if "ImageCaptioning" not in load_dict:
+        #     raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
 
         self.llm = OpenAI(temperature=0)
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key="output")
@@ -1324,7 +1324,7 @@ class ConversationBot:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--load", type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
+    parser.add_argument("--load", type=str, default="Text2Image_cuda:0")
     parser.add_argument("--port", type=int, default=1015)
     args = parser.parse_args()
     server_port = args.port
