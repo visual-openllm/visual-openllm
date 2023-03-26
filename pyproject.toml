@@ -1,0 +1,6 @@
+[tool.black]
+line-length = 119
+
+[tool.ruff]
+ignore = ["E501", "F401", "F841"]
+line-length = 119
