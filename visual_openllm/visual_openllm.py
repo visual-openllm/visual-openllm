@@ -1253,7 +1253,7 @@ class InfinityOutPainting:
 class ConversationBot:
     def __init__(self, load_dict):
         # load_dict = {'VisualQuestionAnswering':'cuda:0', 'ImageCaptioning':'cuda:1',...}
-        print(f"Initializing VisualChatGPT, load_dict={load_dict}")
+        print(f"Initializing Visual OpenLLM, load_dict={load_dict}")
         # if "ImageCaptioning" not in load_dict:
         #     raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
 
@@ -1342,8 +1342,8 @@ def main():
 
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
-    with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
-        chatbot = gr.Chatbot(elem_id="chatbot", label="Visual ChatGPT")
+    with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px} img {max-height: 100% !important}") as demo:
+        chatbot = gr.Chatbot(elem_id="chatbot", label="Visual OpenLLM")
         state = gr.State([])
         with gr.Row():
             with gr.Column(scale=0.7):
