@@ -42,7 +42,7 @@ _CHECKPOINT_FOR_DOC = "THUDM/chatglm-6b-int4"
 _CONFIG_FOR_DOC = "ChatGLM6BConfig"
 
 CHATGLM_6B_PRETRAINED_MODEL_ARCHIVE_LIST = [
-    "THUDM/chatglm-6b",
+    "THUDM/chatglm-6b-int4",
     # See all ChatGLM-6B models at https://huggingface.co/models?filter=chatglm
 ]
 
