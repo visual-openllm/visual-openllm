@@ -1363,4 +1363,4 @@ def main():
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-        demo.launch(server_name="0.0.0.0", server_port=server_port)
+        demo.launch(server_name="0.0.0.0", server_port=server_port, share=True, debug=True)
