@@ -38,7 +38,7 @@ torch._C._jit_override_can_fuse_on_gpu(True)
 
 logger = logging.get_logger(__name__)
 
-_CHECKPOINT_FOR_DOC = "THUDM/ChatGLM-6B"
+_CHECKPOINT_FOR_DOC = "THUDM/chatglm-6b-int4"
 _CONFIG_FOR_DOC = "ChatGLM6BConfig"
 
 CHATGLM_6B_PRETRAINED_MODEL_ARCHIVE_LIST = [
