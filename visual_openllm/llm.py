@@ -36,15 +36,15 @@ class PromptParser:
             return action, action_input
         return None
 
-
+from transformers import AutoTokenizer, AutoModel
 class LLM:
     PROMPT_FORMAT = """Instruction: {input_text}\nAnswer: """
 
     def __init__(self):
         self.device = "cuda:0"
         torch.set_default_tensor_type(torch.cuda.HalfTensor)
-        self.model = ChatGLMForConditionalGeneration.from_pretrained("THUDM/chatglm-6b", device_map="auto")
-        self.model.to(self.device)
+        self.model = AutoModel.from_pretrained("THUDM/chatglm-6b-int4", trust_remote_code=True).half().cuda()
+        #self.model.to(self.device)
         self.model = PeftModel.from_pretrained(self.model, "visual-openllm/visual-openllm-chatglm-6b-rola")
         torch.set_default_tensor_type(torch.cuda.FloatTensor)
         self.tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True)
