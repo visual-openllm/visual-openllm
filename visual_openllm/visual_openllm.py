@@ -16,6 +16,7 @@ from . import openai_inject
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 from transformers import pipeline, BlipProcessor, BlipForConditionalGeneration, BlipForQuestionAnswering
 from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
+from transformers import AutoTokenizer, AutoModel
 
 from diffusers import StableDiffusionPipeline, StableDiffusionInpaintPipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers import EulerAncestralDiscreteScheduler
@@ -305,7 +306,7 @@ class InstructPix2Pix:
             f"\nProcessed InstructPix2Pix, Input Image: {image_path}, Instruct Text: {text}, "
             f"Output Image: {updated_image_path}"
         )
-        return updated_image_path
+        return 'p2p' + updated_image_path
 
 
 class Text2Image:
@@ -1106,10 +1107,8 @@ class VisualQuestionAnswering:
         print(f"Initializing VisualQuestionAnswering to {device}")
         self.torch_dtype = torch.float16 if "cuda" in device else torch.float32
         self.device = device
-        self.processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
-        self.model = BlipForQuestionAnswering.from_pretrained(
-            "Salesforce/blip-vqa-base", torch_dtype=self.torch_dtype
-        ).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained("THUDM/visualglm-6b", trust_remote_code=True)
+        self.model = AutoModel.from_pretrained("THUDM/visualglm-6b", trust_remote_code=True).half().to(self.device)
 
     @prompts(
         name="Answer Question About The Image",
@@ -1118,16 +1117,13 @@ class VisualQuestionAnswering:
         "The input to this tool should be a comma separated string of two, representing the image_path and the question",
     )
     def inference(self, inputs):
-        image_path, question = inputs.split(",")[0], ",".join(inputs.split(",")[1:])
-        raw_image = Image.open(image_path).convert("RGB")
-        inputs = self.processor(raw_image, question, return_tensors="pt").to(self.device, self.torch_dtype)
-        out = self.model.generate(**inputs)
-        answer = self.processor.decode(out[0], skip_special_tokens=True)
+        image_path, question = inputs.split(",")[0], "，".join(inputs.split(",")[1:])
+        response, history = self.model.chat(self.tokenizer, image_path, question, history=[])
         print(
             f"\nProcessed VisualQuestionAnswering, Input Image: {image_path}, Input Question: {question}, "
-            f"Output Answer: {answer}"
+            f"Output Answer: {response}"
         )
-        return answer
+        return 'vqa' + response
 
 
 class InfinityOutPainting:
@@ -1323,30 +1319,35 @@ class ConversationBot:
         img = img.convert("RGB")
         img.save(image_filename, "PNG")
         print(f"Resize image form {width}x{height} to {width_new}x{height_new}")
-        description = self.models["ImageCaptioning"].inference(image_filename)
-        Human_prompt = f'\nHuman: provide a figure named {image_filename}. The description is: {description}. This information helps you to understand this image, but you should use tools to finish following tasks, rather than directly imagine from my description. If you understand, say "Received". \n'
-        AI_prompt = "Received.  "
-        self.agent.memory.buffer = self.agent.memory.buffer + Human_prompt + "AI: " + AI_prompt
-        state = state + [(f"![](/file={image_filename})*{image_filename}*", AI_prompt)]
+        self.agent.memory.buffer = cut_dialogue_history(self.agent.memory.buffer, keep_last_n_words=500)
+        res = self.agent({"input": f'{image_filename},{txt}'})
+        response = re.sub("(image/\S*png)", lambda m: f"![](/file={m.group(0)})*{m.group(0)}*", res["output"])
+        state = state + [(txt, response)]
         print(
-            f"\nProcessed run_image, Input image: {image_filename}\nCurrent state: {state}\n"
+            f"\nProcessed run_text, Input text: {txt}\nCurrent state: {state}\n"
             f"Current Memory: {self.agent.memory.buffer}"
         )
-        return state, state, f"{txt} {image_filename} "
+        return state, state
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--load", type=str, default="Text2Image_cuda:0")
+    parser.add_argument("--load_llm", type=str, default="Chatglm3")
+    parser.add_argument("--load", type=str, default="Text2Image_cuda:0,VisualQuestionAnswering_cuda:0,InstructPix2Pix_cuda:0")
     parser.add_argument("--port", type=int, default=1015)
     args = parser.parse_args()
+    openai_inject.initialize_llm(args.load_llm)
     server_port = args.port
-
+    if args.load_llm == 'Chatglm':
+        args.load = 'Text2Image_cuda:0'
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
+
     with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px} img {max-height: 100% !important}") as demo:
         chatbot = gr.Chatbot(elem_id="chatbot", label="Visual OpenLLM")
         state = gr.State([])
+        uploaded_image = gr.State(None)
+
         with gr.Row():
             with gr.Column(scale=0.7):
                 txt = gr.Textbox(show_label=False, placeholder="Enter text and press enter, or upload an image").style(
@@ -1357,10 +1358,25 @@ def main():
             with gr.Column(scale=0.15, min_width=0):
                 btn = gr.UploadButton("Upload", file_types=["image"])
 
-        txt.submit(bot.run_text, [txt, state], [chatbot, state])
+        def handle_image_upload(image, state, txt):
+            uploaded_image.value = image
+            image_message = f"![](/file={image.name})*{image.name}*"
+            state = state + [(txt, image_message)]
+            return uploaded_image, state, state, txt
+
+        def handle_text_input(uploaded_image, state, text):
+            if uploaded_image is not None:
+                return bot.run_image(uploaded_image.value, state, f'<upload>, {text}')
+            else:
+                return bot.run_text(text, state)
+
+        btn.upload(handle_image_upload, [btn, state, txt], [uploaded_image, chatbot, state, txt])
+        txt.submit(handle_text_input, [uploaded_image, state, txt], [chatbot, state])
+
         txt.submit(lambda: "", None, txt)
-        btn.upload(bot.run_image, [btn, state, txt], [chatbot, state, txt])
-        clear.click(bot.memory.clear)
+        clear.click(lambda: bot.memory.clear(), None, chatbot)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
+        clear.click(lambda: None, None, uploaded_image)  # Clear the image upload state
+
         demo.launch(server_name="0.0.0.0", server_port=server_port)

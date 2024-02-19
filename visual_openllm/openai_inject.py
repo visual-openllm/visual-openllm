@@ -10,7 +10,12 @@ from requests.models import CaseInsensitiveDict
 from .llm import LLM
 
 
-llm_instance = LLM()
+llm_instance = None
+
+
+def initialize_llm(model_name):
+    global llm_instance
+    llm_instance = LLM(model_name)
 
 
 def inject(*args, **kwargs):
