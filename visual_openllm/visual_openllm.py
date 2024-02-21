@@ -1322,7 +1322,7 @@ class ConversationBot:
         self.agent.memory.buffer = cut_dialogue_history(self.agent.memory.buffer, keep_last_n_words=500)
         res = self.agent({"input": f'{image_filename},{txt}'})
         response = re.sub("(image/\S*png)", lambda m: f"![](/file={m.group(0)})*{m.group(0)}*", res["output"])
-        state = state + [(txt, response)]
+        state = state + [(txt[10:], response)]
         print(
             f"\nProcessed run_text, Input text: {txt}\nCurrent state: {state}\n"
             f"Current Memory: {self.agent.memory.buffer}"
