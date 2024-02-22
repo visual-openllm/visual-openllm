@@ -1311,7 +1311,7 @@ class ConversationBot:
     def run_image(self, image, state, txt):
         image_filename = os.path.join("image", f"{str(uuid.uuid4())[:8]}.png")
         print("======>Auto Resize Image...")
-        img = Image.open(image.name)
+        img = Image.open(image.value)
         width, height = img.size
         ratio = min(512 / width, 512 / height)
         width_new, height_new = (round(width * ratio), round(height * ratio))
@@ -1363,14 +1363,14 @@ def main():
                 btn = gr.UploadButton("Upload", file_types=["image"])
 
         def handle_image_upload(image, state, txt):
-            uploaded_image.value = image
+            uploaded_image.value = image.name
             image_message = f"![](/file={image.name})*{image.name}*"
             state = state + [(txt, image_message)]
             return uploaded_image, state, state, txt
 
-        def handle_text_input(uploaded_image, state, text):
-            if uploaded_image is not None:
-                state, matches = bot.run_image(uploaded_image.value, state, f'<upload>, {text}')
+        def handle_text_input(state, text):
+            if uploaded_image.value:
+                state, matches = bot.run_image(uploaded_image, state, f'<upload>, {text}')
             else:
                 state, matches = bot.run_text(text, state)
             uploaded_image.value = matches[-1] if matches else uploaded_image.value
@@ -1381,7 +1381,7 @@ def main():
             return
 
         btn.upload(handle_image_upload, [btn, state, txt], [uploaded_image, chatbot, state, txt])
-        txt.submit(handle_text_input, [uploaded_image, state, txt], [chatbot, state])
+        txt.submit(handle_text_input, [state, txt], [chatbot, state])
 
         txt.submit(lambda: "", None, txt)
         clear.click(lambda: bot.memory.clear(), None, chatbot)
