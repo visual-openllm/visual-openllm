@@ -1108,7 +1108,7 @@ class VisualQuestionAnswering:
         self.torch_dtype = torch.float16 if "cuda" in device else torch.float32
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained("THUDM/visualglm-6b", trust_remote_code=True)
-        self.model = AutoModel.from_pretrained("THUDM/visualglm-6b", trust_remote_code=True).half().to(self.device)
+        self.model = AutoModel.from_pretrained("THUDM/visualglm-6b", trust_remote_code=True, load_in_8bit=True)
 
     @prompts(
         name="Answer Question About The Image",
@@ -1299,12 +1299,14 @@ class ConversationBot:
         res = self.agent({"input": text})
         res["output"] = res["output"].replace("\\", "/")
         response = re.sub("(image/\S*png)", lambda m: f"![](/file={m.group(0)})*{m.group(0)}*", res["output"])
+        pattern = r'(image/\S*png)'
+        matches = re.findall(pattern, res["output"])
         state = state + [(text, response)]
         print(
             f"\nProcessed run_text, Input text: {text}\nCurrent state: {state}\n"
             f"Current Memory: {self.agent.memory.buffer}"
         )
-        return state, state
+        return state, matches
 
     def run_image(self, image, state, txt):
         image_filename = os.path.join("image", f"{str(uuid.uuid4())[:8]}.png")
@@ -1322,12 +1324,14 @@ class ConversationBot:
         self.agent.memory.buffer = cut_dialogue_history(self.agent.memory.buffer, keep_last_n_words=500)
         res = self.agent({"input": f'{image_filename},{txt}'})
         response = re.sub("(image/\S*png)", lambda m: f"![](/file={m.group(0)})*{m.group(0)}*", res["output"])
+        pattern = r'(image/\S*png)'
+        matches = re.findall(pattern, res["output"])
         state = state + [(txt[10:], response)]
         print(
             f"\nProcessed run_text, Input text: {txt}\nCurrent state: {state}\n"
             f"Current Memory: {self.agent.memory.buffer}"
         )
-        return state, state
+        return state, matches
 
 
 def main():
@@ -1366,9 +1370,15 @@ def main():
 
         def handle_text_input(uploaded_image, state, text):
             if uploaded_image is not None:
-                return bot.run_image(uploaded_image.value, state, f'<upload>, {text}')
+                state, matches = bot.run_image(uploaded_image.value, state, f'<upload>, {text}')
             else:
-                return bot.run_text(text, state)
+                state, matches = bot.run_text(text, state)
+            uploaded_image.value = matches[-1] if matches else uploaded_image.value
+            return state, state
+
+        def clear_uploaded_image():
+            uploaded_image.value = None
+            return
 
         btn.upload(handle_image_upload, [btn, state, txt], [uploaded_image, chatbot, state, txt])
         txt.submit(handle_text_input, [uploaded_image, state, txt], [chatbot, state])
@@ -1377,6 +1387,6 @@ def main():
         clear.click(lambda: bot.memory.clear(), None, chatbot)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-        clear.click(lambda: None, None, uploaded_image)  # Clear the image upload state
+        clear.click(clear_uploaded_image, None)  # Clear the image upload state
 
         demo.launch(server_name="0.0.0.0", server_port=server_port)

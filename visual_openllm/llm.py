@@ -58,7 +58,7 @@ class LLM:
         self.device = "cuda:0"
         if self.model_name == 'Chatglm3':
             self.model = AutoPeftModelForCausalLM.from_pretrained(
-                'Franklin0314/visual-llm', trust_remote_code=True, device_map='auto'
+                'Franklin0314/visual-llm', trust_remote_code=True, device_map='auto', load_in_8bit=True
             )
             tokenizer_dir = self.model.peft_config['default'].base_model_name_or_path
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, trust_remote_code=True)

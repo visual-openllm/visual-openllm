@@ -31,3 +31,4 @@ yapf
 icetk
 cpm_kernels
 SwissArmyTransformer>=0.4.4
+bitsandbytes
