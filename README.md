@@ -6,6 +6,12 @@
 - 开源版的"文心一言"
 
 
+## 📝 Changelog
+
+- [2024.2.24] 增加对Chatglm3的支持，新增vqa和pix2pix功能。(thank [@MrChen314](!https://github.com/MrChen314) for this contribution )
+- [2023.3.27] 代码开源
+
+
 ## Demo：
 
 ![](assets/demo.gif)
@@ -13,8 +19,14 @@
 
 ## 运行:
 
+run with `Chatglm3-6B`(Default)
 ```
-python run.py
+python run.py --load_llm Chatglm3
+```
+run with `Chatglm`
+
+```
+python run.py --load_llm Chatglm
 ```
 
 ## Todo:
