@@ -16,7 +16,7 @@ kornia
 numpy
 omegaconf
 open_clip_torch
-openai
+openai==0.27.1
 opencv-python
 prettytable
 safetensors
@@ -24,9 +24,11 @@ streamlit
 test-tube
 timm
 torchmetrics
-transformers
-peft
+transformers==4.33.2
+peft==0.7.1
 webdataset
 yapf
 icetk
 cpm_kernels
+SwissArmyTransformer>=0.4.4
+bitsandbytes
