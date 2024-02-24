@@ -8,7 +8,7 @@
 
 ## 📝 Changelog
 
-- [2024.2.24] 增加对Chatglm3的支持，新增vqa和pix2pix功能。(thank [@MrChen314](!https://github.com/MrChen314) for this contribution )
+- [2024.2.24] 增加对Chatglm3的支持，新增vqa和pix2pix功能。(thank [@MrChen314](https://github.com/MrChen314) for this contribution )
 - [2023.3.27] 代码开源
 
 
